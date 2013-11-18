@@ -3,13 +3,12 @@ require 'mongo'
 
 include Mongo
 
-mongo_client = MongoClient.new("localhost",27017)
-
-db = mongo_client.db("ARI")
-coll = db.collection("stopWords")
+@connection = MongoClient.new("localhost", "27017")
+@db         = @connection.db("ARI")
+@collection = @db.collection("stopWords")
 
 #Deleting previus rows
-coll.remove
+@collection.remove
 
 stoplist = ["a","about","above","across","after",
 "again","against","all","almost","alone",
@@ -97,13 +96,11 @@ stoplist = ["a","about","above","across","after",
 "year","years","yet","you","young",
 "younger","youngest","your","yours"]
 
-#puts stoplist
-n = stoplist.size() -1
+stoplist.size().times { |i| @collection.insert("word" => stoplist[i]) }
 
-for i in 0..n
-  doc = { "" => stoplist[i] }
-  id = coll.insert(doc)
-end
+puts "Done! " + @collection.count.to_s + " words added!"
 
-puts "Done! " + stoplist.size().to_s + " words added!"
+ret = @collection.find({"word" => "yours"}).to_a
+puts ret.to_s.split(",")[1].scan(/"\w"/)
+
 
