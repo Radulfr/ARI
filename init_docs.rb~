@@ -1,0 +1,13 @@
+require 'mongo'
+
+include Mongo
+
+all_files = Dir.entries('Docs') - ['.', '..']
+
+n = all_files.size -1
+
+for i in 0..n
+  File.open('Docs/' + all_files[i], 'r') do |fi|
+    puts fi.absolute_path
+  end
+end

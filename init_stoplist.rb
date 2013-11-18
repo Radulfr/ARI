@@ -8,6 +8,9 @@ mongo_client = MongoClient.new("localhost",27017)
 db = mongo_client.db("ARI")
 coll = db.collection("stopWords")
 
+#Deleting previus rows
+coll.remove
+
 stoplist = ["a","about","above","across","after",
 "again","against","all","almost","alone",
 "along","already","also","although","always",
