@@ -10,6 +10,7 @@ class Indexer
     @stopwords  = @db.collection("stopWords")
     @docs       = @db.collection("documents")
     @termscoll  = @db.collection("terms")
+    @postings   = @db.collection("postings")
     @sw         = getSW
     @all_files  = Dir.entries('Docs') - ['.', '..']
 #    @terms      = getIndexedTerms
@@ -66,6 +67,26 @@ class Indexer
   #Count word in every doc
   def count_word
     self.getIndexedTerms
+    n = @terms.size - 1
+    m = @all_files.size - 1
+    for i in 0..n
+      re = Regexp.new(@terms[i])
+      total_count = 0
+      for j in 0..m
+        content = ""
+        File.open('Docs/'+@all_files[j], 'r') do |f1|
+          while linea = f1.gets
+            content += linea
+          end
+          content.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '')
+          file_count = content.scan(re).size
+          total_count += file_count
+          #insertion
+          #...
+        end
+      end
+    #update value terms
+    end
   end
 
   def start
@@ -74,10 +95,34 @@ class Indexer
     @indexed.size.times { |i| @termscoll.insert(@indexed[i] => 0)}
     puts "Done!"
   end
+
+  #Don't like this solution
+  def getID(word)  #UGLY CODE UGLY CODE UGLY CODE UGLY CODE UGLY CODE UGLY CODE 
+    all_terms = @termscoll.find.to_a
+    re = Regexp.new(word)
+    value = all_terms
+    n = value.size - 1
+    for i in 0..n
+      if value[i].include?(word)
+        value = value[i].to_s
+        break
+      end
+    end
+    value = value.scan(/'.+'/)
+    value = value[0]
+    value = value[1..value.size-2]
+    return value
+  end  #UGLY CODE UGLY CODE UGLY CODE UGLY CODE UGLY CODE UGLY CODE 
+
+#for testing
+  def test
+   # puts @termscoll.find("_id" => self.getID("linux")).to_a
+    puts @termscoll.find_one(:_id => BSON::ObjectId(getID(@terms[1]))).to_a
+  end
 end
 
 #Main
 a = Indexer.new
-a.start
-
-
+a.getIndexedTerms
+#a.start
+a.test
