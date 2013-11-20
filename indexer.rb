@@ -116,8 +116,10 @@ class Indexer
 
 #for testing
   def test
-   # puts @termscoll.find("_id" => self.getID("linux")).to_a
+
     puts @termscoll.find_one(:_id => BSON::ObjectId(getID(@terms[1]))).to_a
+    #puts @termscoll.update({:_id => BSON::ObjectId(getID(@terms[1]))}, {"$set" => { @terms[1] => 90 }})
+    #try to update later
   end
 end
 
