@@ -12,6 +12,7 @@ class Indexer
     @termscoll  = @db.collection("terms")
     @sw         = getSW
     @terms      = getIndexedTerms
+    @indexed    = Array.new
   end
 
   def getIndexedTerms
@@ -22,6 +23,7 @@ class Indexer
     else
       indexedTerms.size.times { |i| @terms[i] = indexedTerms[i].to_s.scan(/"[a-z]+"=>/)}
       @terms.size.times { |i| @terms[i].to_s.scan(/\w+/){ |w| @terms[i] = w} }
+#      @terms = @terms - [ "^[a-z0-9]+" ]
       return @terms
     end
   end
@@ -37,6 +39,7 @@ class Indexer
   end
 
   def index_words(document)
+    puts ">>> Processing document: " + document.to_s
     content = ""
     File.open(document) do |doc|
       while linea = doc.gets
@@ -44,27 +47,45 @@ class Indexer
       end
     end
     content.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '')
-     content = content.scan(/\S\w+\D/)
-    content.size.times { |i| content[i] = content[i].gsub(/\p{^Alnum}/, '').to_s}
+    content = content.scan(/\S\w+\D/)
+    content.size.times { |i| content[i] = content[i].gsub(/\p{^Alnum}/, '').to_s.downcase}
 #    @sw.size.times { |i| puts @sw[i].to_s + " - " + content[i].to_s}
 
     #Deleting StopWords
     content = content - @sw
     self.getIndexedTerms
 
-    for i in 0..content.size-1
-      if not @terms.include?(content[i])
-        @termscoll.insert(content[i] => 0)
-      else
-      end
-    end
+    #Deleting repeated
+    content = content.uniq
+#    content = content - [ "^[a-z0-9]+" ]
+#    puts content.size.to_s
+    @indexed += content
+    @indexed = @indexed.uniq
+
+#    for i in 0..content.size-1
+#      if not @terms.include?(content[i])
+#        @termscoll.insert(content[i] => 0)
+#      else
+#      end
+#    end
 #    content.each { |doc| puts doc.to_s}
 #    puts content.size.to_s
   end
 end
 
+
+
 #Main
 a = Indexer.new
-#puts a.getSW.size.to_s
-a.index_words('Docs/Diald-HOWTO.txt')
-#puts a.getIndexedTerms
+
+#for each document
+#a.index_words('Docs/Diald-HOWTO.txt')
+
+all_files = Dir.entries('Docs') - ['.', '..']
+
+#all_files.(size/8).times { |i| a.index_words('Docs/'+all_files[i])}
+
+puts @indexed.size.to_s
+puts "Saving..."
+@indexed.(size/8).times { |i| @termscoll.insert(@indexed[i] => 0)}
+puts "Done! "

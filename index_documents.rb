@@ -15,5 +15,5 @@ all_files = Dir.entries('Docs') - ['.', '..']
 
 #puts coll.find({"word" => /\w/}, :fields => ["word"]).to_a
 
-puts @collection.find.to_a
+puts @collection.find.to_a[0].scan(/"\w"=>"\w"/)
 
