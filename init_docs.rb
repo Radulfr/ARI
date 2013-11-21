@@ -12,15 +12,13 @@ n = all_files.size()
 all_files_path = Array.new
 all_files_names = Array.new
 
-for i in 0..n-1
-  all_files_path[i] = File.absolute_path(File.open('Docs/' + all_files[i]))
-  all_files_names[i] = File.basename(File.open('Docs/' + all_files[i]), ".txt")
-end
+
+all_files.size.times {|i| all_files_path[i] = File.absolute_path(File.open('Docs/' + all_files[i]))} 
 
 #Deleting previus rows
 @collection.remove
 
-n.times { |i| @collection.insert(all_files_names[i] => all_files_path[i]) }
+n.times { |i| @collection.insert("docname" => all_files[i].gsub(/.txt/, ""), "docpath" => all_files_path[i]) }
 
 puts "Done! " + @collection.count.to_s + " documents indexed!"
 

@@ -4,6 +4,7 @@ include Mongo
 
 class Indexer
 
+  #Constructor
   def initialize
     @connection = MongoClient.new("localhost", "27017")
     @db         = @connection.db("ARI")
@@ -13,20 +14,17 @@ class Indexer
     @postings   = @db.collection("postings")
     @sw         = getSW
     @all_files  = Dir.entries('Docs') - ['.', '..']
-#    @terms      = getIndexedTerms
+    @terms      = Array.new
     @indexed    = Array.new
+    @ID_INDEX   = 0
+    @ID_VALUE   = 1
   end
 
+  #Get the indexed terms
   def getIndexedTerms
     @terms = Array.new
     indexedTerms = @termscoll.find.to_a
-    if indexedTerms.size == 0
-      return 0
-    else
-      indexedTerms.size.times { |i| @terms[i] = indexedTerms[i].to_s.scan(/"[a-z]+"=>/)}
-      @terms.size.times { |i| @terms[i].to_s.scan(/\w+/){ |w| @terms[i] = w} }
-      return @terms
-    end
+    indexedTerms.size.times { |i| @terms[i] = indexedTerms[i].to_a[1][1] }
   end
 
   #Recover the StopWords list
@@ -69,10 +67,11 @@ class Indexer
     self.getIndexedTerms
     n = @terms.size - 1
     m = @all_files.size - 1
-    for i in 0..n
+    for i in 0..10
+      puts "["+(i+1).to_s+"]\tword: "+@terms[i]
       re = Regexp.new(@terms[i])
       total_count = 0
-      for j in 0..m
+      for j in 0..10
         content = ""
         File.open('Docs/'+@all_files[j], 'r') do |f1|
           while linea = f1.gets
@@ -83,48 +82,56 @@ class Indexer
           total_count += file_count
           #insertion
           #...
+          self.insertDocumentValue(@terms[i], @all_files[j].gsub(/.txt/, ""), file_count)
         end
       end
-    #update value terms
+      self.updateTermValue(@terms[i], total_count)
+      #update value terms
     end
   end
 
   def start
     @all_files.size.times { |i| index_words('Docs/'+@all_files[i], i+1)}
     puts "Saving..."
-    @indexed.size.times { |i| @termscoll.insert(@indexed[i] => 0)}
+    @indexed.size.times { |i| @termscoll.insert("term" => @indexed[i], "value" => 0); @postings.insert("term" => @indexed[i])}
     puts "Done!"
+    puts "Indexing... "
+    count_word
+    puts "Done! Finished!"
   end
 
-  #Don't like this solution
-  def getID(word)  #UGLY CODE UGLY CODE UGLY CODE UGLY CODE UGLY CODE UGLY CODE 
-    all_terms = @termscoll.find.to_a
-    re = Regexp.new(word)
-    value = all_terms
-    n = value.size - 1
-    for i in 0..n
-      if value[i].include?(word)
-        value = value[i].to_s
-        break
-      end
-    end
-    value = value.scan(/'.+'/)
-    value = value[0]
-    value = value[1..value.size-2]
-    return value
-  end  #UGLY CODE UGLY CODE UGLY CODE UGLY CODE UGLY CODE UGLY CODE 
+  #Get the ID of a given term
+  def getIdTerm(value)
+    term_array = @termscoll.find_one({:term => value}).to_a
+    return term_array[@ID_INDEX][@ID_VALUE]
+  end
 
-#for testing
+  #Get the ID of a given doc
+  def getIdDoc(value)
+    doc_array = @docs.find_one({:docname => value}).to_a
+    return doc_array[@ID_INDEX][@ID_VALUE]
+  end
+  
+  #Updating data in Terms table
+  def updateTermValue(term,value)
+    @termscoll.update({:term => term}, {"$set" => { :value => value }})
+  end
+
+  #Insert pair Term => doc/value , doc/value, ... 
+  def insertDocumentValue(term, doc, value)
+    @postings.update({:term => term}, {"$set" => { doc => value }})
+  end
+
+  #for testing
   def test
-
-    puts @termscoll.find_one(:_id => BSON::ObjectId(getID(@terms[1]))).to_a
-    #puts @termscoll.update({:_id => BSON::ObjectId(getID(@terms[1]))}, {"$set" => { @terms[1] => 90 }})
-    #try to update later
+    self.getIndexedTerms
+    @terms.size.times { |i| puts @terms[i] }
   end
 end
 
 #Main
 a = Indexer.new
-a.getIndexedTerms
+#a.test
+a.count_word
 #a.start
-a.test
+

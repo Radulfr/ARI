@@ -100,7 +100,5 @@ stoplist.size().times { |i| @collection.insert("word" => stoplist[i]) }
 
 puts "Done! " + @collection.count.to_s + " words added!"
 
-ret = @collection.find({"word" => "yours"}).to_a
-puts ret.to_s.split(",")[1].scan(/"\w"/)
 
 
