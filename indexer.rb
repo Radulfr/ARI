@@ -41,13 +41,14 @@ class Indexer
   def index_words(document, index)
     puts "["+index.to_s+"]\t" + "Processing document: " + document.to_s
     content = ""
-    File.open(document) do |doc|
-      while linea = doc.gets
-        content += linea.force_encoding("UTF-8")
-      end
-    end
+
+    file = File.open(document, 'r')
+    content = file.read
+    file.close
+
     content.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '')
-    content = content.scan(/[a-zA-Z]+/)
+    #kind of words
+    content = content.scan(/[a-zA-Z][a-zA-Z][a-zA-Z][a-zA-Z]+/)
     content.size.times { |i| content[i] = content[i].gsub(/\p{^Alnum}/, '').to_s.downcase}
 
     #Deleting StopWords
@@ -67,34 +68,36 @@ class Indexer
   def count_word
     @indexed = "" 
     self.getIndexedTerms
-    n = @terms.size - 1
-    m = @all_files.size - 1
+    nterms = @terms.size - 1
+    ndocs = @all_files.size - 1
     for i in 0..10
       puts "["+(i+1).to_s+"]\tword: "+@terms[i]
       re = Regexp.new(@terms[i])
       total_count = 0
-      for j in 0..10
+      for j in 0..ndocs
+        
+        file = File.open('Docs/'+@all_files[j], 'r')
+        content = file.read
+        file.close
+
+        content.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '')
+        file_count = content.scan(re).size
+        total_count += file_count
         content = ""
-        File.open('Docs/'+@all_files[j], 'r') do |f1|
-          while linea = f1.gets
-            content += linea
-          end
-          content.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '')
-          file_count = content.scan(re).size
-          total_count += file_count
-          #insertion
-          #...
-          if file_count > 0
-            self.insertDocumentValue(@terms[i], @all_files[j].gsub(/.txt/, ""), file_count)
-          end
+        #insertion
+        if file_count > 0
+          self.insertDocumentValue(@terms[i], @all_files[j].gsub(/.txt/, ""), file_count)
         end
       end
-      self.updateTermValue(@terms[i], total_count)
       #update value terms
+      self.updateTermValue(@terms[i], total_count)
     end
   end
 
   def start
+    @connection.drop_database("ARI")
+    @postings.remove
+    @termscoll.remove
     @all_files.size.times { |i| index_words('Docs/'+@all_files[i], i+1)}
     puts "Saving..."
     @indexed.size.times { |i| @termscoll.insert("term" => @indexed[i], "value" => 0); @postings.insert("term" => @indexed[i])}
@@ -129,8 +132,10 @@ class Indexer
   #for testing
   def test
     self.getIndexedTerms
-    @terms.size.times { |i| puts @terms[i] }
+    puts @terms[1]
+    updateTermValue(@terms[1], 80)
   end
+
 end
 
 #Main
@@ -139,7 +144,7 @@ a = Indexer.new
 a.start
 t2 = Time.now
 puts "Total time: " + ((t2 - t1)/60).to_s + " minutes"
-#a.test
+
 
 
 

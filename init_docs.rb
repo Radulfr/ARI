@@ -19,10 +19,10 @@ class Init_docs
     
     #Deleting previus rows
     @collection.remove
-    
+    puts "Generating docs index..."    
     n.times { |i| @collection.insert("docname" => all_files[i].gsub(/.txt/, ""), "docpath" => all_files_path[i]) }
   
-    puts "Done! " + @collection.count.to_s + " documents indexed!"
+    puts "> Done! " + @collection.count.to_s + " documents indexed!"
   end
 end
 

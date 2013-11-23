@@ -97,10 +97,11 @@ class Init_stoplist
                 "working","works","would","x","y",
                 "year","years","yet","you","young",
                 "younger","youngest","your","yours"]
-    
+
+
+    puts "Generating Stopwords..."    
     stoplist.size().times { |i| @collection.insert("word" => stoplist[i]) }
-    
-    puts "Done! " + @collection.count.to_s + " words added!"
+    puts "> Done! " + @collection.count.to_s + " words added!"
   end
 end
 
