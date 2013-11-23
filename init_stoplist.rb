@@ -10,7 +10,7 @@ class Init_stoplist
     @collection = @db.collection("stopWords")
     
     #Deleting previus rows
-    @collection.remove
+    @connection.drop_database("ARI")
     
     stoplist = ["a","about","above","across","after",
                 "again","against","all","almost","alone",

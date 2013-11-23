@@ -1,7 +1,6 @@
 require 'mongo'
 
 include Mongo
-#include 'Init_docs'
 
 class Indexer
 
@@ -68,9 +67,11 @@ class Indexer
   def count_word
     @indexed = "" 
     self.getIndexedTerms
-    nterms = @terms.size - 1
     ndocs = @all_files.size - 1
-    for i in 0..10
+
+#    @terms = @terms[1..200]
+    nterms = @terms.size - 1
+    for i in 0..nterms
       puts "["+(i+1).to_s+"]\tword: "+@terms[i]
       re = Regexp.new(@terms[i])
       total_count = 0
@@ -95,10 +96,9 @@ class Indexer
   end
 
   def start
-    @connection.drop_database("ARI")
     @postings.remove
     @termscoll.remove
-    @all_files.size.times { |i| index_words('Docs/'+@all_files[i], i+1)}
+    @all_files.size/8.times { |i| index_words('Docs/'+@all_files[i], i+1)}
     puts "Saving..."
     @indexed.size.times { |i| @termscoll.insert("term" => @indexed[i], "value" => 0); @postings.insert("term" => @indexed[i])}
     puts "Done!"
