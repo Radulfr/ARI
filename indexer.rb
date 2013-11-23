@@ -1,6 +1,7 @@
 require 'mongo'
 
 include Mongo
+#include 'Init_docs'
 
 class Indexer
 
@@ -46,7 +47,7 @@ class Indexer
       end
     end
     content.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '')
-    content = content.scan(/\S\w+\D/)
+    content = content.scan(/[a-zA-Z]+/)
     content.size.times { |i| content[i] = content[i].gsub(/\p{^Alnum}/, '').to_s.downcase}
 
     #Deleting StopWords
@@ -64,6 +65,7 @@ class Indexer
 
   #Count word in every doc
   def count_word
+    @indexed = "" 
     self.getIndexedTerms
     n = @terms.size - 1
     m = @all_files.size - 1
@@ -82,7 +84,9 @@ class Indexer
           total_count += file_count
           #insertion
           #...
-          self.insertDocumentValue(@terms[i], @all_files[j].gsub(/.txt/, ""), file_count)
+          if file_count > 0
+            self.insertDocumentValue(@terms[i], @all_files[j].gsub(/.txt/, ""), file_count)
+          end
         end
       end
       self.updateTermValue(@terms[i], total_count)
@@ -130,8 +134,12 @@ class Indexer
 end
 
 #Main
+t1 = Time.now 
 a = Indexer.new
+a.start
+t2 = Time.now
+puts "Total time: " + ((t2 - t1)/60).to_s + " minutes"
 #a.test
-a.count_word
-#a.start
+
+
 
