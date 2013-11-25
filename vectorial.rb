@@ -34,7 +34,8 @@ class Vectorial
 
   def getDocuments
     postings = Array.new
-    
+    #TRY TO BUILD THE TABLE IN JUST 1 QUERY
+    #TODO
     @question.each { |word| postings += (@postings.find_one({:term => word}).to_a) }
    
     postings.each { |data| puts " ----------", data[0]}
