@@ -7,7 +7,7 @@ class Indexer
   #Constructor
   def initialize
     @connection = MongoClient.new("localhost", "27017")
-    @db         = @connection.db("ARI")
+    @db         = @connection.db("ARI_TESTING")
     @stopwords  = @db.collection("stopWords")
     @docs       = @db.collection("documents")
     @termscoll  = @db.collection("terms")
@@ -148,3 +148,4 @@ puts "Total time: " + ((t2 - t1)/60).to_s + " minutes"
 
 
 
+#let's change something
