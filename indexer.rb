@@ -99,22 +99,43 @@ class Indexer
       count_words(file)
        }
   end
+ 
   def count_words(file)
     f = File.open('Docs/'+file, 'r')
     content = f.read
     content.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '')
     content = content.downcase
-    words = content.scan(/[a-z]+/)
-    words -= @sw
-    puts "File: "+ file+ "... ("+ words.size.to_s+ " words)"
-    words.each { |term| fdj = words.count(term); 
+    words_file = content.scan(/[a-z]+/)
+    words_file -= @sw
+    words = words_file.uniq
+    puts "File: "+ file+ "... ("+ words_file.size.to_s+ " words)"
+    words.each { |term| fdj = words_file.count(term); 
       self.insertDocumentValue(term, file.gsub(/.txt/,""), fdj);
     }
     f.close
-    GC.start
+#    GC.start
   end 
 
+  #Insert pair Term => doc/value , doc/value, ... 
+  def insertDocumentValue(term, doc, value)
+    exist = @postings.find({:term => term})
+    if exist.nil?
+      #Updating postings
+      @postings.update({:term => term}, {"$set" => { doc => value }})      
+      #Updating terms
+      #-Querying terms; recover the last value and add
+      prev_value = @termscoll.find_one({:term => term}).to_a[2][1]
+      value += prev_value
+      @termscoll.update({:term => term}, {"$set" => { :value => value }})
+    else
+      #Creating in postings
+      @postings.insert({"term" => term, doc => value})
+      #Creating
+      @termscoll.insert({"term" => term, "value" => value})
+    end
+  end
 
+  #MAIN
   def start
     @postings.remove
     @termscoll.remove
@@ -142,24 +163,6 @@ class Indexer
     @termscoll.update({:term => term}, {"$set" => { :value => value }})
   end
 
-  #Insert pair Term => doc/value , doc/value, ... 
-  def insertDocumentValue(term, doc, value)
-    exist = @postings.find({:term => term})
-    if exist.nil?
-      #Updating postings
-      @postings.update({:term => term}, {"$set" => { doc => value }})      
-      #Updating terms
-      #-Querying terms; recover the last value and add
-      prev_value = @termscoll.find_one({:term => term}).to_a[2][1]
-      @termscoll.update({:term => term}, {"$set" => { :value => value+prev_value }})
-    else
-      #Creating in postings
-      @postings.insert({"term" => term, doc => value})
-      #Creating
-      @termscoll.insert({"term" => term, "value" => value})
-    end
-
-  end
 
   #for testing
   def test
