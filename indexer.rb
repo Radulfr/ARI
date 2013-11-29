@@ -118,16 +118,21 @@ class Indexer
 
   #Insert pair Term => doc/value , doc/value, ... 
   def insertDocumentValue(term, doc, value)
-    exist = @postings.find({:term => term})
-    if exist.nil?
+    exist = @postings.find({:term => term}).to_a
+
+    if exist.size > 0
+#      puts term + " does not exists"
       #Updating postings
       @postings.update({:term => term}, {"$set" => { doc => value }})      
       #Updating terms
       #-Querying terms; recover the last value and add
-      prev_value = @termscoll.find_one({:term => term}).to_a[2][1]
+      prev_value = @termscoll.find_one({:term => term}).to_a
+      prev_value = prev_value[2][1]
       value += prev_value
-      @termscoll.update({:term => term}, {"$set" => { :value => value }})
+#      @termscoll.update({:term => term}, {"$set" => { :value => value }})
+      updateTermValue(term,value)
     else
+#      puts term + " exists!"
       #Creating in postings
       @postings.insert({"term" => term, doc => value})
       #Creating
@@ -176,6 +181,7 @@ end
 t1 = Time.now 
 a = Indexer.new
 a.start
+#a.insertDocumentValue("calimocho", "Java-Decompiler-HOWTO", 8000)
 t2 = Time.now
 puts "Total time: " + ((t2 - t1)/60).to_s + " minutes"
 
