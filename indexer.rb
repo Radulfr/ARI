@@ -37,14 +37,9 @@ class Indexer
   end
 
   #Indexing words of a document
-  def index_words(document, index)
-    puts "["+index.to_s+"]\t" + "Processing document: " + document.to_s
-    content = ""
-
-    file = File.open(document, 'r')
+  def index_words(file)
+    puts "Processing document: ", file.absolute_path
     content = file.read
-    file.close
-
     content.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '')
     #kind of words
     content = content.scan(/[a-zA-Z][a-zA-Z][a-zA-Z][a-zA-Z]+/)
@@ -95,18 +90,41 @@ class Indexer
     end
   end
 
+
+
+############################################################################################################################
+  def index_doc
+    @docs.remove
+    @all_files.each { |file| @docs.insert("docname" => file.gsub(/.txt/,""), "docpath" => File.absolute_path(file, 'Docs/'));
+      count_words(file)
+       }
+  end
+  def count_words(file)
+    f = File.open('Docs/'+file, 'r')
+    content = f.read
+    content.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '')
+    content = content.downcase
+    words = content.scan(/[a-z]+/)
+    words -= @sw
+    puts "File: "+ file+ "... ("+ words.size.to_s+ " words)"
+    words.each { |term| fdj = words.count(term); 
+      self.insertDocumentValue(term, file.gsub(/.txt/,""), fdj);
+    }
+    f.close
+    GC.start
+  end 
+
+
   def start
     @postings.remove
     @termscoll.remove
-    @all_files.size/8.times { |i| index_words('Docs/'+@all_files[i], i+1)}
-    puts "Saving..."
-    @indexed.size.times { |i| @termscoll.insert("term" => @indexed[i], "value" => 0); @postings.insert("term" => @indexed[i])}
+    puts "Indexing docs..."
+    index_doc
     puts "Done!"
-    puts "Indexing... "
-    count_word
-    puts "Done! Finished!"
+    
+#    @indexed.size.times { |i| @termscoll.insert("term" => @indexed[i], "value" => 0); @postings.insert("term" => @indexed[i])}
   end
-
+####################################################################################################################################
   #Get the ID of a given term
   def getIdTerm(value)
     term_array = @termscoll.find_one({:term => value}).to_a
@@ -118,7 +136,7 @@ class Indexer
     doc_array = @docs.find_one({:docname => value}).to_a
     return doc_array[@ID_INDEX][@ID_VALUE]
   end
-  
+
   #Updating data in Terms table
   def updateTermValue(term,value)
     @termscoll.update({:term => term}, {"$set" => { :value => value }})
@@ -126,14 +144,27 @@ class Indexer
 
   #Insert pair Term => doc/value , doc/value, ... 
   def insertDocumentValue(term, doc, value)
-    @postings.update({:term => term}, {"$set" => { doc => value }})
+    exist = @postings.find({:term => term})
+    if exist.nil?
+      #Updating postings
+      @postings.update({:term => term}, {"$set" => { doc => value }})      
+      #Updating terms
+      #-Querying terms; recover the last value and add
+      prev_value = @termscoll.find_one({:term => term}).to_a[2][1]
+      @termscoll.update({:term => term}, {"$set" => { :value => value+prev_value }})
+    else
+      #Creating in postings
+      @postings.insert({"term" => term, doc => value})
+      #Creating
+      @termscoll.insert({"term" => term, "value" => value})
+    end
+
   end
 
   #for testing
   def test
-    self.getIndexedTerms
-    puts @terms[1]
-    updateTermValue(@terms[1], 80)
+    term_array = @termscoll.find_one({:term => "java"}).to_a
+    puts term_array[2][1]
   end
 
 end
