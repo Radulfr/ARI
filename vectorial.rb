@@ -9,7 +9,7 @@ class Vectorial
   #Constructor
   def initialize
     @connection = MongoClient.new("localhost", "27017")
-    @db         = @connection.db("ARI")
+    @db         = @connection.db("ARI_T")
     @stopwords  = @db.collection("stopWords")
     @postings   = @db.collection("postings")
     @sw         = getSW
@@ -33,12 +33,13 @@ class Vectorial
   end
 
   def getDocuments
-    postings = Array.new
+    docs = Array.new
+    data = Array.new
     #TRY TO BUILD THE TABLE IN JUST 1 QUERY
     #TODO
-    @question.each { |word| postings += (@postings.find_one({:term => word}).to_a) }
-   
-    postings.each { |data| puts " ----------", data[0]}
+    for i in 0..@question.size-1
+      docs[i] = (@postings.find_one({:term => @question[i]})) 
+    end
   end
 
   #Design Under Test
@@ -50,6 +51,6 @@ end
 
 a = Vectorial.new
 puts "==== QUESTION ===="
-puts a.getQuestion("Java system añlskjdfañls")
+puts a.getQuestion("the semantic quality")
 puts "==== RESULTS ===="
 a.getDocuments

@@ -7,7 +7,7 @@ class Init_docs
   end
   def start
     @connection = MongoClient.new("localhost", "27017")
-    @db         = @connection.db("ARI")
+    @db         = @connection.db("ARI_T2")
     @collection = @db.collection("documents")
     
     #Relation docname : [File_Name], docpaht : [File_Path]

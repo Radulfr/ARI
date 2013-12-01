@@ -6,7 +6,7 @@ include Mongo
 class Init_stoplist
   def start
     @connection = MongoClient.new("localhost", "27017")
-    @db         = @connection.db("ARI_TESTING")
+    @db         = @connection.db("ARI_T2")
     @collection = @db.collection("stopWords")
     
     #Deleting previus rows

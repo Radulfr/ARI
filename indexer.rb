@@ -7,7 +7,7 @@ class Indexer
   #Constructor
   def initialize
     @connection = MongoClient.new("localhost", "27017")
-    @db         = @connection.db("ARI_TESTING")
+    @db         = @connection.db("ARI_T2")
     @stopwords  = @db.collection("stopWords")
     @docs       = @db.collection("documents")
     @termscoll  = @db.collection("terms")
@@ -113,7 +113,7 @@ class Indexer
       self.insertDocumentValue(term, file.gsub(/.txt/,""), fdj);
     }
     f.close
-#    GC.start
+    GC.start
   end 
 
   #Insert pair Term => doc/value , doc/value, ... 
@@ -142,6 +142,7 @@ class Indexer
 
   #MAIN
   def start
+#    @db.drop_database
     @postings.remove
     @termscoll.remove
     puts "Indexing docs..."
