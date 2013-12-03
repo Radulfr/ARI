@@ -36,7 +36,6 @@ class Vectorial
     docs = Array.new
     docs_names = Array.new
     terms = Array.new
-    data = Array.new
 
     @question.each { |word| docs += (@postings.find_one({:term => word}).to_a) }
 
@@ -47,22 +46,29 @@ class Vectorial
     for i in 0..docs.size-1
       docs_names[i] = docs[i][0]
     end
+
     docs_names = docs_names - ['_id', 'term']
- 
-#need to refine TERMS   
+    docs_names = docs_names.uniq
+ ################################need to refine TERMS   
 #    puts docs_names[1], terms[1][0]
+    data = Array.new(docs_names.size) { Array.new(terms.size) }
+
     for i in 0..docs_names.size-1
-      data [i] = Array.new
       for j in 0..terms.size-1
-        puts terms[j][0][0].to_s+ "--->"+ docs_names[i].to_s
-        if terms[j][0][0].eql?(docs_names[i])
-          data[i][j] = terms[j][1]
-        else
-          data[i][j] = 0
+        for k in 0..terms[j].size-1
+#          puts docs_names[i].to_s+ "--------->"+ terms[j][k][0].to_s
+          if docs_names[i].eql?(terms[j][k][0])
+            data[i][j] = terms[j][k][1]
+            puts "Im here -> " + data[i][j].to_s
+            print data
+          else
+            data[i][j] = 0
+          end
         end
       end
     end
-    terms.each{ |term| puts term[0][1], "----------------" }
+#    terms.each{ |term| puts term, "----------------" }
+
     puts "# Docs: " + docs_names.size.to_s
     puts "# Terms: "+ terms.size.to_s
     return data
@@ -70,15 +76,19 @@ class Vectorial
 
   #Design Under Test
   def DUT
-    puts @postings.find_one({:term => @question[0]}).to_a[0]
+    terms = Array.new
+    for i in 0..@question.size-1
+      terms[i] = @postings.find_one({:term => @question[i]}).to_a
+    end
+    print terms[0] , "\n"
   end
-
 end
 
 a = Vectorial.new
 puts "==== QUESTION ===="
-puts a.getQuestion("the semantic flesh")
+puts a.getQuestion("the semantic semantic")
 puts "==== RESULTS ===="
-docs = a.getDocuments
+data = a.getDocuments
 
-docs.each { |entry| puts entry, "----" }
+#a.DUT
+#docs.each { |entry| puts entry, "----" }
