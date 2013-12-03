@@ -94,6 +94,27 @@ class Vectorial
     docs_names = docs_names - ['_id', 'term']
     docs_names = docs_names.uniq
 
+#-------------
+    data = Array.new(docs_names.size) { Array.new(terms.size, 0) }
+
+    for i in 0..docs_names.size-1
+      for j in 0..terms.size-1
+        for k in 0..terms[j].size-1
+          if docs_names[i].eql?(terms[j][k][0])
+            data[i][j] = terms[j][k][1]
+            print data, " ", terms[j][k][0],"\n"
+          else
+#            data[i][j] = 0
+          end
+
+        end
+      end
+    end
+#    terms.each{ |term| puts term, "----------------" }
+#    print terms
+    puts "# Docs: " + docs_names.size.to_s
+    puts "# Terms: "+ terms.size.to_s
+    return data
 
   end
 end
@@ -102,7 +123,7 @@ a = Vectorial.new
 puts "==== QUESTION ===="
 puts a.getQuestion("the semantic semantic")
 puts "==== RESULTS ===="
-data = a.getDocuments
+data = a.DUT
 print data
 #a.DUT
 #docs.each { |entry| puts entry, "----" }
