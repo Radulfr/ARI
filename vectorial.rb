@@ -58,9 +58,10 @@ class Vectorial
         for k in 0..terms[j].size-1
 #          puts docs_names[i].to_s+ "--------->"+ terms[j][k][0].to_s
           if docs_names[i].eql?(terms[j][k][0])
-            data[i][j] = terms[j][k][1]
+            data[i][j] = terms[j][k][1].to_i
             puts "Im here -> " + data[i][j].to_s
             print data
+            puts terms[j][k][1].class
           else
             data[i][j] = 0
           end
@@ -76,11 +77,24 @@ class Vectorial
 
   #Design Under Test
   def DUT
+    docs = Array.new
+    docs_names = Array.new
     terms = Array.new
+
+    @question.each { |word| docs += (@postings.find_one({:term => word}).to_a) }
+
     for i in 0..@question.size-1
       terms[i] = @postings.find_one({:term => @question[i]}).to_a
     end
-    print terms[0] , "\n"
+
+    for i in 0..docs.size-1
+      docs_names[i] = docs[i][0]
+    end
+
+    docs_names = docs_names - ['_id', 'term']
+    docs_names = docs_names.uniq
+
+
   end
 end
 
@@ -89,6 +103,6 @@ puts "==== QUESTION ===="
 puts a.getQuestion("the semantic semantic")
 puts "==== RESULTS ===="
 data = a.getDocuments
-
+print data
 #a.DUT
 #docs.each { |entry| puts entry, "----" }
