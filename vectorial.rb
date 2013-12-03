@@ -154,29 +154,20 @@ class Vectorial
       results[i][0] = docs_names[i]
       results[i][1] =  sum[i]/e2[i]
     end
-
     results = results.sort_by{|e| e[1]}
     results = results.reverse
     return results
   end
 #------------------------------------------ 
- def start
-    puts "==== QUESTION ===="
-    getQuestion
-    puts "==== RESULTS ===="
-    getData
-
+ def start(question)
+   puts "==== QUESTION ===="
+   print getQuestion(question), "\n"
+   puts "==== RESULTS ===="
+   result = getData
+   print result, "\n"
   end
 end
 
 a = Vectorial.new
-puts "==== QUESTION ===="
-puts a.getQuestion("I have a ruby compiler")
-#puts a.getQuestion("ruby flesh")
-puts "==== RESULTS ===="
-data = a.getData
-print data, "\n"
-#a.DUT
-#docs.each { |entry| puts entry, "----" }
-
+a.start("I have a ruby compiler emacs")
 
