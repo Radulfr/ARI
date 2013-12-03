@@ -15,6 +15,7 @@ class Vectorial
     @sw         = getSW
     @question   = Array.new
     @docslist   = Array.new
+#    @data       = getData
   end
 
   #Recover stopwords
@@ -32,7 +33,7 @@ class Vectorial
     @question = q - @sw
   end
 
-  def getDocuments
+  def DUT
     docs = Array.new
     docs_names = Array.new
     terms = Array.new
@@ -76,7 +77,7 @@ class Vectorial
   end
 
   #Design Under Test
-  def DUT
+  def getData
     docs = Array.new
     docs_names = Array.new
     terms = Array.new
@@ -102,11 +103,8 @@ class Vectorial
         for k in 0..terms[j].size-1
           if docs_names[i].eql?(terms[j][k][0])
             data[i][j] = terms[j][k][1]
-            print data, " ", terms[j][k][0],"\n"
-          else
-#            data[i][j] = 0
+#            print data, " ", terms[j][k][0],"\n"
           end
-
         end
       end
     end
@@ -115,15 +113,21 @@ class Vectorial
     puts "# Docs: " + docs_names.size.to_s
     puts "# Terms: "+ terms.size.to_s
     return data
+  end
+  def start
+    puts "==== QUESTION ===="
+    getQuestion
+    puts "==== RESULTS ===="
+    getData
 
   end
 end
 
 a = Vectorial.new
 puts "==== QUESTION ===="
-puts a.getQuestion("the semantic semantic")
+puts a.getQuestion("I have a compiler of ruby")
 puts "==== RESULTS ===="
-data = a.DUT
-print data
+data = a.getData
+print data, "\n"
 #a.DUT
 #docs.each { |entry| puts entry, "----" }
