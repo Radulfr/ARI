@@ -15,7 +15,6 @@ class Vectorial
     @sw         = getSW
     @question   = Array.new
     @docslist   = Array.new
-#    @data       = getData
   end
 
   #Recover stopwords
@@ -33,47 +32,8 @@ class Vectorial
     @question = q - @sw
   end
 
-  def DUT
-    docs = Array.new
-    docs_names = Array.new
-    terms = Array.new
-
-    @question.each { |word| docs += (@postings.find_one({:term => word}).to_a) }
-
-    for i in 0..@question.size-1
-      terms[i] = @postings.find_one({:term => @question[i]}).to_a
-    end
-
-    for i in 0..docs.size-1
-      docs_names[i] = docs[i][0]
-    end
-
-    docs_names = docs_names - ['_id', 'term']
-    docs_names = docs_names.uniq
- ################################need to refine TERMS   
-#    puts docs_names[1], terms[1][0]
-    data = Array.new(docs_names.size) { Array.new(terms.size) }
-
-    for i in 0..docs_names.size-1
-      for j in 0..terms.size-1
-        for k in 0..terms[j].size-1
-          if docs_names[i].eql?(terms[j][k][0])
-            data[i][j] = terms[j][k][1].to_i
-            puts "Im here -> " + data[i][j].to_s
-            print data
-            puts terms[j][k][1].class
-          else
-            data[i][j] = 0
-          end
-        end
-      end
-    end
-    puts "# Docs: " + docs_names.size.to_s
-    puts "# Terms: "+ terms.size.to_s
-    return data
-  end
-
-  def getData
+  #Vectorial
+  def initVectorial
     docs = Array.new
     docs_names = Array.new
     terms = Array.new
@@ -120,7 +80,7 @@ class Vectorial
       log_count_if[i] = Math.log10(count_if[i]) 
     end
 #DATA_W--------------------------------
-
+#MISSING Q¿?
     for i in 0..docs_names.size-1
       for j in 0..terms.size-1
         data_w[i][j] = data[i][j]/log_count_if[j]
@@ -163,7 +123,7 @@ class Vectorial
    puts "==== QUESTION ===="
    print getQuestion(question), "\n"
    puts "==== RESULTS ===="
-   result = getData
+   result = initVectorial
    print result, "\n"
   end
 end
