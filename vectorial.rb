@@ -124,10 +124,13 @@ class Vectorial
    print getQuestion(question), "\n"
    puts "==== RESULTS ===="
    result = initVectorial
-   print result, "\n"
+
+   for i in 0..result.size-1
+     puts result[i][0].to_s + "\t\t\t"+ result[i][1].to_s
+   end
   end
 end
 
 a = Vectorial.new
-a.start("I have a ruby compiler emacs")
+print a.start("I have a ruby compiler emacs")
 
