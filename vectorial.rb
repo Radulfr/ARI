@@ -3,6 +3,8 @@
 #recover terms - count - etc
 
 require 'mongo'
+require 'builder'
+
 include Mongo
 
 class Vectorial
@@ -12,9 +14,13 @@ class Vectorial
     @db         = @connection.db("ARI_TESTING")
     @stopwords  = @db.collection("stopWords")
     @postings   = @db.collection("postings")
+    @docs       = @db.collection("documents")
     @sw         = getSW
     @question   = Array.new
     @docslist   = Array.new
+    @ID_INDEX   = 0
+    @ID_VALUE   = 1
+
   end
 
   #Recover stopwords
@@ -108,30 +114,67 @@ class Vectorial
     e2 = e1.collect{|item|  item*terms.size}
 #SUMA/E2----------------------------
     ranking = Array.new(docs_names.size,0)
-    results = Array.new(docs_names.size) { Array.new(2) }
+    results = Array.new(docs_names.size) { Array.new(4) }
 
     for i in 0..e1.size-1
       results[i][0] = docs_names[i]
-      results[i][1] =  sum[i]/e2[i]
+      results[i][1] =  1 - sum[i]/e2[i]
+      results[i][2] = getIdDoc(docs_names[i])
+      results[i][3] = getDocPath(docs_names[i])
     end
     results = results.sort_by{|e| e[1]}
-#The less is the value, the high is the relationship
-#    results = results.reverse
+
+    results = results.reverse
     return results
   end
+
+  def getDocPath(value)
+    doc_array = @docs.find_one({:docname => value}).to_a
+    return doc_array[2][1]
+  end
+
+  def getIdDoc(value)
+    doc_array = @docs.find_one({:docname => value}).to_a
+    return doc_array[@ID_INDEX][@ID_VALUE]
+  end
+
+#for showing results
+  def showResult(result)
+    for i in 0..result.size-1
+      puts i.to_s + "- \t(Doc ID: "+ result[i][2].to_s+") "+result[i][0].to_s + "\t\t\t"+ result[i][1].to_s
+    end
+  end
+
 #------------------------------------------ 
  def start(question)
    puts "==== QUESTION ===="
    print getQuestion(question), "\n"
    puts "==== RESULTS ===="
    result = initVectorial
-
-   for i in 0..result.size-1
-     puts result[i][0].to_s + "\t\t\t"+ result[i][1].to_s
-   end
+#   showResult(result)
+   resultsToXML(result)
   end
+
+#TODO
+ def resultsToXML(result)
+   xml  = Builder::XmlMarkup.new(:indent => 2)
+   xml.instruct! :xml, :encoding => "UTF-8"
+   term =  result[1][0].to_s
+
+   xml.resultado do |r|
+
+     xml.pregunta do |p|
+       @question.each{ |q| p.item q }
+     end
+     result.each { |r| xml.documento(:id => r[2]) do |d| d.titulo r[0]; d.relevancia (r[1]*100).round(2).to_s + "%"; d.texto r[3] end }
+   end
+   f = File.open(@question.to_s+".xml", 'w')
+   f.write(xml)
+ end
 end
 
 a = Vectorial.new
-#a.start("I have a ruby compiler emacs")
-a.start("semantic approach")
+results = a.start("I have a ruby compiler")
+#a.start("the semantic web")
+#print a.resultsToXML(results)
+
