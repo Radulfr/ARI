@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 #delete stopwords
 #recover terms - count - etc
-
 require 'mongo'
 require 'builder'
-
 include Mongo
-
 class Vectorial
+
   #Constructor
   def initialize
     @connection = MongoClient.new("localhost", "27017")
@@ -23,7 +21,6 @@ class Vectorial
     @INDEX_TITLE= 0
     @INDEX_ID   = 2
     @INDEX_PATH = 3
-
   end
 
   #Recover stopwords
@@ -35,7 +32,7 @@ class Vectorial
     return @sw
   end
 
-  #get de question
+  #get the question
   def getQuestion(q)
     q = q.downcase.scan(/\w+/)
     @question = q - @sw
@@ -46,23 +43,17 @@ class Vectorial
     docs = Array.new
     docs_names = Array.new
     terms = Array.new
-
     @question.each { |word| docs += (@postings.find_one({:term => word}).to_a) }
-
     for i in 0..@question.size-1
       terms[i] = @postings.find_one({:term => @question[i]}).to_a
     end
-
     for i in 0..docs.size-1
       docs_names[i] = docs[i][0]
     end
-
     docs_names = docs_names - ['_id', 'term']
     docs_names = docs_names.uniq
-
     data = Array.new(docs_names.size) { Array.new(terms.size, 0) }
     data_w = Array.new(docs_names.size) { Array.new(terms.size, 0) }
-#INITIAL -> data
     for i in 0..docs_names.size-1
       for j in 0..terms.size-1
         for k in 0..terms[j].size-1
@@ -80,7 +71,6 @@ class Vectorial
         count_if[i] += data[j][i]
       end
     end
-#    print count_if
 #LOGARITHM count_if
 #--------------------------------
     log_count_if = Array.new(count_if.size, 0)
@@ -95,7 +85,6 @@ class Vectorial
         data_w[i][j] = data[i][j]/log_count_if[j]
       end
     end
-
 #SUM---------------------------------
     sum = Array.new(docs_names.size,0)
     for i in 0..docs_names.size-1
@@ -105,7 +94,6 @@ class Vectorial
     end
 #SUM---------------------------------
     e1 = Array.new(docs_names.size,0)
-
     for i in 0..docs_names.size-1
       for j in 0..terms.size-1
         e1[i] += (data_w[i][j])**2
@@ -113,12 +101,10 @@ class Vectorial
     end
     sum.each_index { |i| e1[i] += sum[i]**2 } 
 #E2---------------------------------
-
     e2 = e1.collect{|item|  item*terms.size}
 #SUMA/E2----------------------------
     ranking = Array.new(docs_names.size,0)
     results = Array.new(docs_names.size) { Array.new(4) }
-
     for i in 0..e1.size-1
       results[i][0] = docs_names[i]
       results[i][1] =  1 - sum[i]/e2[i]
@@ -126,68 +112,65 @@ class Vectorial
       results[i][3] = getDocPath(docs_names[i])
     end
     results = results.sort_by{|e| e[1]}
-
     results = results.reverse
     return results
   end
 
+  #With a doc name recover path
   def getDocPath(value)
     doc_array = @docs.find_one({:docname => value}).to_a
     return doc_array[2][1]
   end
 
+  #With a doc name recover id
   def getIdDoc(value)
     doc_array = @docs.find_one({:docname => value}).to_a
     return doc_array[@ID_INDEX][@ID_VALUE]
   end
 
-#for showing results
+  #for showing results
   def showResult(result)
     for i in 0..result.size-1
       puts i.to_s + "- \t(Doc ID: "+ result[i][2].to_s+") "+result[i][0].to_s + "\t\t\t"+ result[i][1].to_s
     end
   end
 
-#------------------------------------------ 
- def start(question)
-   puts "==== QUESTION ===="
-   print getQuestion(question), "\n"
-   puts "==== RESULTS ===="
-   result = initVectorial
-#   showResult(result)
-   resultsToXML(result)
+  #Main method - question is needed
+  def start(question)
+    puts "==== QUESTION ===="
+    print getQuestion(question), "\n"
+    puts "==== RESULTS ===="
+    result = initVectorial
+    #   showResult(result)
+    resultsToXML(result)
   end
 
-#TODO
- def resultsToXML(result)
-   xml  = Builder::XmlMarkup.new(:indent => 2)
-   xml.instruct! :xml, :encoding => "UTF-8"
-#<?xml-stylesheet type="text/xsl" href="Resultados.xsl"?>
-   xml.declare! :DOCTYPE, :Resultado, :SYSTEM, "Resultados.dtd"
-   xml.tag! 'xml-stylesheet', :type => "text/xsl", :href => "Resultados.xsl"
-#   xml.instruct! :xml_stylesheet, :type => "text/xsl"
-
-   xml.resultado do |r|
-
-     xml.pregunta do |p|
-       @question.each{ |q| p.item q }
-     end
-     
-     result.each { 
-       |r| xml.documento(:id => r[@INDEX_ID]) do |d| 
-         d.titulo r[@INDEX_TITLE];
-         perc = (r[1]*100).round(2).to_s;
-         d.relevancia perc  + "%"; d.texto r[@INDEX_PATH]
-       end 
-     }
-   end
-   f = File.open("Results.xml", 'w')
-   f.write(xml)
- end
+  #results  -> to XML File (Results.xml)
+  def resultsToXML(result)
+    xml  = Builder::XmlMarkup.new(:indent => 2)
+    xml.instruct! :xml, :encoding => "UTF-8"
+    xml.declare! :DOCTYPE, :Resultado, :SYSTEM, "Resultados.dtd"
+    xml.tag! 'xml-stylesheet', :type => "text/xsl", :href => "Resultados.xsl"
+    xml.resultado do |r|
+      xml.pregunta do |p|
+        @question.each{ |q| p.item q }
+      end
+      result.each { 
+        |r| xml.documento(:id => r[@INDEX_ID]) do |d| 
+          d.titulo r[@INDEX_TITLE];
+          perc = (r[1]*100).round(2).to_s;
+          d.relevancia perc  + "%"; d.texto r[@INDEX_PATH]
+        end 
+      }
+    end
+    f = File.open("Results.xml", 'w')
+    f.write(xml)
+  end
 end
 
+#Init
 a = Vectorial.new
-results = a.start("I have a ruby compiler emacs")
-#a.start("the semantic web")
-#print a.resultsToXML(results)
+#Quetion
+a.start("I have a ruby compiler emacs")
+
 
