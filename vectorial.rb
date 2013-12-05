@@ -20,6 +20,9 @@ class Vectorial
     @docslist   = Array.new
     @ID_INDEX   = 0
     @ID_VALUE   = 1
+    @INDEX_TITLE= 0
+    @INDEX_ID   = 2
+    @INDEX_PATH = 3
 
   end
 
@@ -159,22 +162,32 @@ class Vectorial
  def resultsToXML(result)
    xml  = Builder::XmlMarkup.new(:indent => 2)
    xml.instruct! :xml, :encoding => "UTF-8"
-   term =  result[1][0].to_s
+#<?xml-stylesheet type="text/xsl" href="Resultados.xsl"?>
+   xml.declare! :DOCTYPE, :Resultado, :SYSTEM, "Resultados.dtd"
+   xml.tag! 'xml-stylesheet', :type => "text/xsl", :href => "Resultados.xsl"
+#   xml.instruct! :xml_stylesheet, :type => "text/xsl"
 
    xml.resultado do |r|
 
      xml.pregunta do |p|
        @question.each{ |q| p.item q }
      end
-     result.each { |r| xml.documento(:id => r[2]) do |d| d.titulo r[0]; d.relevancia (r[1]*100).round(2).to_s + "%"; d.texto r[3] end }
+     
+     result.each { 
+       |r| xml.documento(:id => r[@INDEX_ID]) do |d| 
+         d.titulo r[@INDEX_TITLE];
+         perc = (r[1]*100).round(2).to_s;
+         d.relevancia perc  + "%"; d.texto r[@INDEX_PATH]
+       end 
+     }
    end
-   f = File.open(@question.to_s+".xml", 'w')
+   f = File.open("Results.xml", 'w')
    f.write(xml)
  end
 end
 
 a = Vectorial.new
-results = a.start("I have a ruby compiler")
+results = a.start("I have a ruby compiler emacs")
 #a.start("the semantic web")
 #print a.resultsToXML(results)
 
