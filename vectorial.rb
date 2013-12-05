@@ -115,7 +115,8 @@ class Vectorial
       results[i][1] =  sum[i]/e2[i]
     end
     results = results.sort_by{|e| e[1]}
-    results = results.reverse
+#The less is the value, the high is the relationship
+#    results = results.reverse
     return results
   end
 #------------------------------------------ 
@@ -132,5 +133,5 @@ class Vectorial
 end
 
 a = Vectorial.new
-print a.start("I have a ruby compiler emacs")
-
+#a.start("I have a ruby compiler emacs")
+a.start("semantic approach")
