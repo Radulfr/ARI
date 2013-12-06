@@ -1,0 +1,26 @@
+<h1>Results</h1>
+
+<table>
+  <tr>
+    <th>INDEX</th>
+    <th>ID</th>
+    <th>FILE</th>
+    <th>RELEVANCY</th>
+  </tr>
+  
+  <% for i in 0..3 %>
+  <tr>
+    <td> 
+      <%= i+1 %>
+    <td>
+      <%= @data[i][2] %>
+    </td>
+    <td>
+      <%= @data[i][0] %>
+    </td>
+    <td>
+      <%= @data[i][1] %>
+    </td>
+  </tr>
+  <% end %>
+</table>

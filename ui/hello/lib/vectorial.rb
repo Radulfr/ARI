@@ -4,6 +4,7 @@
 require 'mongo'
 require 'builder'
 include Mongo
+
 class Vectorial
 
   #Constructor
@@ -143,6 +144,7 @@ class Vectorial
     result = initVectorial
     #   showResult(result)
     resultsToXML(result)
+    return result
   end
 
   #results  -> to XML File (Results.xml)
@@ -173,6 +175,8 @@ class Vectorial
     f.close
     f = File.open("Results.xml", 'w')
     f.write(data)
+    f.close
+    return data
   end
 end
 
